@@ -1,0 +1,488 @@
+<canvas id="cv" width="800" height="800"></canvas>
+<br/>
+<input type="number" id="l1" name="l1" min="1" max="100" value="15" style="position:absolute;left:735px;top:380px;" step=".1">
+<input type="number" id="l2" name="l2" min="1" max="100" value="30" style="position:absolute;left:415px;top:750px;" step=".1">
+<input type="number" id="l3" name="l3" min="1" max="100" value="45" style="position:absolute;left:20px;top:415px;" step=".1">
+<input type="number" id="l4" name="l4" min="1" max="100" value="60" style="position:absolute;left:340px;top:40px;" step=".1">
+<button onclick="reset()">Reset</button>
+
+
+<script type="text/javascript">
+  
+function draw() {
+    var cv = document.getElementById('cv');
+    var ct = cv.getContext('2d');
+    
+    var w = cv.width;
+    var h = cv.height;
+    
+    ct.clearRect(0, 0, w, h);
+    
+    var tt1=18, tt2=12, tt3=14, tt4=16;
+    var tt1=18, tt2=12, tt3=18, tt4=12;
+
+    var gl1=tt1,
+        gl2=tt1+tt2, 
+        gl3=tt1+tt2+tt3,
+        gl4=tt1+tt2+tt3+tt4;
+        
+
+    var gl1=document.getElementById('l1').value,
+        gl2=document.getElementById('l2').value, 
+        gl3=document.getElementById('l3').value,
+        gl4=document.getElementById('l4').value;
+        
+  url.searchParams.set('gl1', gl1);
+  url.searchParams.set('gl2', gl2);
+  url.searchParams.set('gl3', gl3);
+  url.searchParams.set('gl4', gl4);
+        
+history.pushState({}, null, url);
+
+    var l1=gl1, l2=gl2-gl1, l3=gl3-gl2, l4=gl4-gl3; //relative quarter lengthes
+    var p=10; //plot padding, %
+    var iq=gl4/4; // ideal quarter length
+    var nl1=iq, nl2=gl1+iq, nl3=gl2+iq, nl4=gl3+iq; // ideal absolute length for each quarter
+    var ic=Math.sqrt(w*w/4 + h*h/4); //ideal diagonal
+        
+    var minL = Math.min(l1, l2, l3, l4); // minimum of the relative quarter lengthes
+    var maxL = Math.max(l1, l2, l3, l4); // maximum of the relative quarter lengthes
+    
+    var gc = Math.round(minL/maxL * 100) / 100; //global coef
+    var c1 = Math.round(l1/iq * 100) / 100; //first quarter  coef
+    var c2 = Math.round(l2/iq * 100) / 100; //second quarter  coef
+    var c3 = Math.round(l3/iq * 100) / 100; //third quarter  coef
+    var c4 = Math.round(l4/iq * 100) / 100; //fourth quarter  coef
+    
+    
+    var gcd = Math.round(minL/maxL * 100) / 100; //first quarter 
+    
+    var cd1 = Math.round(l1/maxL * 100) / 100; 
+    var cd2 = Math.round(l2/maxL * 100) / 100; 
+    var cd3 = Math.round(l3/maxL * 100) / 100; 
+    var cd4 = Math.round(l4/maxL * 100) / 100; 
+    
+    
+    
+    var pad = (w/100*p); // plot padding, px
+    var r = w/2-pad; // ideal radius
+    
+    var ig=Math.sqrt(r*r + r*r); // ideal corner distance
+    
+    var rc1 = ig-ig*c1;
+    var rc2 = ig-ig*c2;
+    var rc3 = ig-ig*c3;
+    var rc4 = ig-ig*c4;
+    
+    
+    var d1=Math.cos(45)*rc1;
+    var d2=Math.cos(45)*rc2;
+    var d3=Math.cos(45)*rc3;
+    var d4=Math.cos(45)*rc4;
+    
+    var ic4x = w/100*p;
+    var ic4y = w/100*p;
+    
+    var ic1x = ic4x + w-w/100*p*2;
+    var ic1y = ic4y;
+    
+    var ic2x = ic1x;
+    var ic2y = ic1y + h-h/100*p*2;
+    
+    var ic3x = ic4x;
+    var ic3y = ic2y;
+    
+    
+    
+    var rc4x = ic4x + d4;
+    var rc4y = ic4y + d4;
+    
+    var rc1x = ic1x - d1;
+    var rc1y = ic1y + d1;
+    
+    var rc2x = ic2x - d2;
+    var rc2y = ic2x - d2;
+    
+    var rc3x = ic3x + d3;
+    var rc3y = ic3y - d3;
+    
+    
+    var m4y=rc1y - ((rc1x-w/2)/(rc1x-rc4x))*(rc1y-rc4y);
+    
+    var m1x=rc2x + ((h/2-rc1y)/(rc2y-rc1y))*(rc1x-rc2x);
+    
+    var m2y=rc3y - ((w/2-rc3x)/(rc2x-rc3x))*(rc3y-rc2y);
+    
+    var m3x=rc4x + ((rc3y-h/2)/(rc3y-rc4y))*(rc3x-rc4x);
+    
+    var m4 = findCrossY({'x': rc4x-w/2, 'y': rc4y-h/2}, {'x': rc1x-w/2, 'y': rc1y-h/2});
+    var m4y = m4.y+h/2
+    
+    var m2 = findCrossY({'x': rc2x-w/2, 'y': rc2y-h/2}, {'x': rc3x-w/2, 'y': rc3y-h/2});
+    var m2y = m2.y+h/2
+    
+    
+    
+    var m1 = findCrossX({'x': rc2x-w/2, 'y': rc2y-h/2}, {'x': rc1x-w/2, 'y': rc1y-h/2});
+    var m1x = m1.x+w/2
+    
+    var m3 = findCrossX({'x': rc4x-w/2, 'y': rc4y-h/2}, {'x': rc3x-w/2, 'y': rc3y-h/2});
+    var m3x = m3.x+w/2
+    
+    var adjy = h/2-(m2y+m4y)/2
+    var adjx = w/2-(m1x+m3x)/2
+    
+    var tr1=(r*c1+r*c2+r*c3+r*c4)/4;
+    
+    var qr1=tr1;
+    var qr2=tr1;
+    var qr3=tr1;
+    var qr4=tr1;
+    
+    
+    var qr1=tr1/c1;
+    var qr2=tr1/c2;
+    var qr3=tr1/c3;
+    var qr4=tr1/c4;
+    
+    
+     var tc1S = {x: 0, y: h/2-m4y}
+     var tc1E = {x: m1x - w/2, y: 0}
+     var tc3S = {x: 0, y: h/2-m2y}
+     var tc3E = {x: m3x - w/2, y: 0}
+     
+     var tc1S = {x: 0, y: r}
+     var tc1E = {x: r, y: 0}
+     var tc3S = {x: 0, y: -r}
+     var tc3E = {x: -r, y: 0}
+     
+     
+     var crossTc1S = {x: tc1S.x+w/2, y: h/2-tc1S.y}
+     
+     var tc1 = findCircleCenter(
+      tc1S,
+      tc1E,
+      qr1
+    );
+    var tc2 = findCircleCenter(
+      tc1E,
+      tc3S,
+      qr2
+    );
+    var tc3 = findCircleCenter(
+      tc3S,
+      tc3E,
+      qr3
+    );
+    var tc4 = findCircleCenter(
+      tc3E,
+      tc1S,
+      qr4
+    );
+    
+    
+    
+    var c1SAngle = 90 * (Math.PI/180) - Math.atan2(tc1S.y - tc1.y, tc1S.x - tc1.x)   - 90 * (Math.PI/180) 
+    var c1EAngle = 90 * (Math.PI/180) - Math.atan2(tc1E.y - tc1.y, tc1E.x - tc1.x)   - 90 * (Math.PI/180) 
+    
+    
+    
+    
+    var c2SAngle = 90 * (Math.PI/180) - Math.atan2(tc1E.y - tc2.y, tc1E.x - tc2.x)   - 90 * (Math.PI/180) 
+    var c2EAngle = 90 * (Math.PI/180) - Math.atan2(tc3S.y - tc2.y, tc3S.x - tc2.x)   - 90 * (Math.PI/180) 
+    
+    
+    var c3SAngle = 90 * (Math.PI/180) - Math.atan2(tc3S.y - tc3.y, tc3S.x - tc3.x)   - 90 * (Math.PI/180) 
+    var c3EAngle = 90 * (Math.PI/180) - Math.atan2(tc3E.y - tc3.y, tc3E.x - tc3.x)   - 90 * (Math.PI/180) 
+    
+    
+    var c4SAngle = 90 * (Math.PI/180) - Math.atan2(tc3E.y - tc4.y, tc3E.x - tc4.x)   - 90 * (Math.PI/180) 
+    var c4EAngle = 90 * (Math.PI/180) - Math.atan2(tc1S.y - tc4.y, tc1S.x - tc4.x)   - 90 * (Math.PI/180) 
+    
+    
+    
+    
+    
+    
+    ct.beginPath();
+    ct.arc(tc1.x+w/2, h/2-tc1.y, qr1, c1SAngle, c1EAngle, false);
+    ct.stroke();
+    ct.closePath();
+    
+    
+    
+    ct.beginPath();
+    ct.arc(tc2.x+w/2, h/2-tc2.y, qr2, c2SAngle, c2EAngle, false);
+    ct.stroke();
+    ct.closePath();
+    
+    
+    
+    ct.beginPath();
+    ct.arc(tc3.x+w/2, h/2-tc3.y, qr3, c3SAngle, c3EAngle, false);
+    ct.stroke();
+    ct.closePath();
+    
+    
+    
+    ct.beginPath();
+    ct.arc(tc4.x+w/2, h/2-tc4.y, qr4, c4SAngle, c4EAngle, false);
+    ct.stroke();
+    ct.closePath();
+    
+    
+    const midpoint = {
+      x: (0 + m1x - w/2) / 2,
+      y: (h/2-m4y + 0) / 2
+    };
+    
+    
+    
+    ct.font = "24px serif";
+    ct.textBaseline = "hanging";
+    
+    
+    ct.beginPath();
+    ct.arc(tc1.x+w/2, h/2-tc1.y, 5, 0, 2 * Math.PI, false);
+    ct.stroke();
+    ct.closePath();
+    ct.strokeStyle = "black";
+    var letter = 'N';
+    if (c1>1) {
+      letter = "F"
+    } else if (c1<1) {
+      letter = "E"
+    }
+    var text1 = letter + " = "+cd1+' | '+c1;
+    ct.strokeText(text1, w*0.60, h*0.25);
+    if (cd1 == gcd) {
+      ct.fillText(text1, w*0.60, h*0.25);
+    }
+    
+    
+    
+    
+    ct.beginPath();
+    ct.strokeStyle = "blue";
+    ct.arc(tc2.x+w/2, h/2-tc2.y, 5, 0, 2 * Math.PI, false);
+    ct.stroke();
+    ct.closePath();
+    ct.strokeStyle = "black";
+    var letter = 'N';
+    if (c2>1) {
+      letter = "E"
+    } else if (c2<1) {
+      letter = "F"
+    }
+    var text2 = letter + " = "+cd2+' | '+c2;
+    ct.strokeText(text2, w*0.60, h*0.75);
+    if (cd2 == gcd) {
+      ct.fillText(text2, w*0.60, h*0.75);
+    }
+    
+    
+    
+    ct.beginPath();
+    ct.strokeStyle = "brown";
+    ct.arc(tc3.x+w/2, h/2-tc3.y, 5, 0, 2 * Math.PI, false);
+    ct.stroke();
+    ct.closePath();
+    ct.strokeStyle = "black";
+    var letter = 'N';
+    if (c3>1) {
+      letter = "E"
+    } else if (c3<1) {
+      letter = "F"
+    }
+    var text3 = letter + " = "+cd3+' | '+c3;
+    ct.strokeText(text3, w*0.30, h*0.75);
+    if (cd3 == gcd) {
+      ct.fillText(text3, w*0.30, h*0.75);
+    }
+    
+    ct.beginPath();
+    ct.strokeStyle = "magenta";
+    ct.arc(tc4.x+w/2, h/2-tc4.y, 5, 0, 2 * Math.PI, false);
+    ct.stroke();
+    ct.closePath();
+    ct.strokeStyle = "black";
+    var letter = 'N';
+    if (c4>1) {
+      letter = "F"
+    } else if (c4<1) {
+      letter = "E"
+    }
+    var text4 = letter + " = "+cd4+' | '+c4;
+    ct.strokeText(text4, w*0.30, h*0.25);
+    if (cd4 == gcd) {
+      ct.fillText(text4, w*0.30, h*0.25);
+    }
+    
+    
+    ct.beginPath();
+    ct.setLineDash([5, 8]);
+    ct.moveTo(w/2, 0);
+    ct.lineTo(w/2, h);
+    ct.closePath();
+    ct.stroke();
+    
+    
+    ct.beginPath();
+    ct.moveTo(0, h/2);
+    //ct.moveTo(0, h/2);
+    ct.lineTo(w, h/2);
+    ct.closePath();
+    ct.stroke();
+    
+    ct.beginPath();
+    ct.strokeStyle = "green";
+    //ct.setLineDash([1, 0]);
+    ct.rect(w/100*p, h/100*p, w-w/100*p*2, h-h/100*p*2);
+    ct.stroke();
+    ct.closePath();
+    
+    ct.beginPath();
+    ct.arc(w/2, h/2, h/2-h/100*p, 0, 2 * Math.PI, false);
+    ct.stroke();
+    ct.closePath();
+    
+    
+    ct.beginPath();
+    ct.setLineDash([10, 0]);
+    ct.strokeStyle = "red";
+    ct.moveTo(rc1x+adjx, rc1y+adjy);
+    ct.lineTo(rc2x+adjx, rc2y+adjy);
+    ct.lineTo(rc3x+adjx, rc3y+adjy);
+    ct.lineTo(rc4x+adjx, rc4y+adjy);
+    ct.closePath();
+    ct.stroke();
+    
+    
+    
+    
+    ct.closePath();
+    ct.stroke();
+    
+    
+}
+
+function circleCenterFromTwoPointsAndRadius(x1, y1, x2, y2, r) {
+  // Find midpoint of line segment
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+
+  // Find distance between two points
+  const d = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+
+  // Find slope of line passing through two points
+  const m = (y2 - y1) / (x2 - x1);
+
+  // Find coordinates of center of circle
+  const sign = (y2 - y1) < 0 ? -1 : 1;
+  const x = mx + sign * Math.sqrt(r ** 2 / (1 + m ** 2));
+  const y = my + m * (x - mx);
+
+  return { x, y };
+}
+
+function findCircleCenter(point1, point2, radius) {
+  // Find the midpoint between the two points
+  const midpoint = {
+    x: (point1.x + point2.x) / 2,
+    y: (point1.y + point2.y) / 2
+  };
+
+  // Calculate the distance between the two points
+  const distance = Math.sqrt(
+    Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2)
+  );
+
+  // Calculate the half-chord length
+  const halfChord = distance / 2;
+
+  // Calculate the height of the triangle formed by the half-chord and the radius
+  const height = Math.sqrt(Math.pow(radius, 2) - Math.pow(halfChord, 2));
+  
+  
+  
+  var angleRadians = Math.atan2(point2.y - point1.y, point2.x - point1.x) - (90 * (Math.PI/180));
+  
+var angleDeg = angleRadians * 180 / Math.PI;
+  //alert(angleRadians+'='+angleDeg);
+
+  // Calculate the coordinates of the circle center
+  const center = {
+    x: midpoint.x + (height * Math.cos(angleRadians)),
+    y: midpoint.y + (height * Math.sin(angleRadians)) // Add or subtract height depending on orientation
+  };
+
+  return center;
+}
+
+function findCrossX(p1, p2) {
+
+  var x = p1.x
+  if (p1.x!==p2.x) {
+  
+    var x = (-1*p1.y)/((p2.y-p1.y)/(p2.x-p1.x)) + p1.x
+  }
+  
+  return {'x': x, 'y': 0};
+}
+
+function findCrossY(p1, p2) {
+
+  var y = p1.y
+  if (p1.y!==p2.y) {
+    var y = (-1*p1.x) * (p2.y - p1.y) / (p2.x - p1.x)  + p1.y
+  }
+  
+  return {'x': 0, 'y': y};
+}
+
+
+var url = new URL(window.location);
+
+
+var elL1 = document.getElementById("l1"),
+    elL2 = document.getElementById("l2"),
+    elL3 = document.getElementById("l3"),
+    elL4 = document.getElementById("l4");
+
+function setInputs()
+{
+  if (url.searchParams.has('gl1')) {
+    elL1.value = url.searchParams.get('gl1');
+  } 
+  if (url.searchParams.has('gl2')) {
+    elL2.value = url.searchParams.get('gl2');
+  } 
+  if (url.searchParams.has('gl3')) {
+    elL3.value = url.searchParams.get('gl3');
+  } 
+  if (url.searchParams.has('gl4')) {
+    elL4.value = url.searchParams.get('gl4');
+  } 
+}
+setInputs();
+
+
+draw();
+
+elL1.addEventListener("change", draw);
+elL2.addEventListener("change", draw);
+elL3.addEventListener("change", draw);
+elL4.addEventListener("change", draw);
+
+function reset() {
+  url.searchParams.set('gl1', 15);
+  url.searchParams.set('gl2', 30);
+  url.searchParams.set('gl3', 45);
+  url.searchParams.set('gl4', 60); 
+
+  history.pushState({}, null, url);
+  setInputs();
+  draw();
+}
+
+</script>
